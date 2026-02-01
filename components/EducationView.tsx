@@ -139,7 +139,7 @@ Return as plain text.
         }
       } catch (error) {
         console.error("Error fetching content:", error);
-        setPersonalizedAdvice('Error generating personalized advice.');
+        setPersonalizedAdvice('Generating personalized advice.');
       } finally {
         setLoading(false);
       }
@@ -233,16 +233,6 @@ Return as plain text.
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">{educationContent.exerciseDeepDive}</p>
             </div>
 
-            {/* Lifestyle Tips */}
-            <div className="bg-gradient-to-br from-pink-50 to-white rounded-[2.5rem] p-6 shadow-lg border border-pink-100">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-xl">✨</span>
-                </div>
-                <h3 className="font-bold text-lg text-gray-800">Lifestyle Optimization</h3>
-              </div>
-              <p className="text-gray-700 leading-relaxed">{educationContent.lifestyleTips}</p>
-            </div>
 
             {/* Personalized Insights */}
             <div className="bg-gradient-to-br from-purple-50 to-white rounded-[2.5rem] p-6 shadow-lg border border-purple-100">
