@@ -1,0 +1,7 @@
+{
+  "name": "Aura - Women's Health & Hormone Tracker",
+  "description": "A holistic health companion that syncs your diet, exercise, and wellness with your natural hormone cycles. Features cycle tracking, personalized nutrition, and PCOS-friendly recommendations.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
