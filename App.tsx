@@ -325,8 +325,8 @@ useEffect(() => {
       case AppView.STATS:
         return <StatsView logs={dailyLogs} user={user!} />;
 
-        case AppView.EDUCATION:  // ← ADD THESE 2 LINES
-  return <EducationView user={user!} insights={insights} />;
+      case AppView.EDUCATION:
+        return <EducationView user={user!} insights={insights} dailyLogs={dailyLogs} />;
       
       case AppView.PROFILE:
         return <ProfileView user={user!} onUpdate={setUser} onLogout={handleLogout} />;

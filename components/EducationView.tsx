@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, BookOpen, Sparkles, Loader } from 'lucide-react';
-import { UserProfile, CycleInsights } from '../types';
+import { UserProfile, CycleInsights, DailyLog } from '../types';
 import { Logo } from '../constants';
 import { GoogleGenAI } from "@google/genai";
 
 interface Props {
   user: UserProfile;
   insights: CycleInsights | null;
+  dailyLogs: DailyLog[];
 }
 
 interface EducationContent {
@@ -17,8 +18,9 @@ interface EducationContent {
   lifestyleTips: string;
 }
 
-const EducationView: React.FC<Props> = ({ user, insights }) => {
+const EducationView: React.FC<Props> = ({ user, insights, dailyLogs }) => {
   const [educationContent, setEducationContent] = useState<EducationContent | null>(null);
+  const [personalizedAdvice, setPersonalizedAdvice] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const getApiKey = (): string => {
@@ -99,15 +101,52 @@ Return as JSON with keys: hormoneExplanation, phaseScience, nutritionDeepDive, e
 
         const content = JSON.parse(response.text || "{}");
         setEducationContent(content);
+
+        // Now handle personalized advice
+        if (dailyLogs.length > 0) {
+          const logsText = dailyLogs.map(log => 
+            `Date: ${log.date}, Period: ${log.hasPeriod ? 'Yes' : 'No'}, Symptoms: ${log.symptoms.join(', ')}, Nutrition: ${log.nutritionNote}`
+          ).join('\n');
+
+          const personalizedPrompt = `
+You are Aura, a women's health AI. Analyze the user's daily logs and provide personalized insights and advice.
+
+User's logs:
+${logsText}
+
+Current phase: ${insights.phaseTitle} (Day ${insights.cycleDay})
+
+Provide a personalized blurb (150-200 words) that:
+- Notices patterns in symptoms (e.g., "I noticed you're experiencing bloating and cramps...")
+- Comments on logged foods (e.g., "Great that you logged eating corn, which is rich in...")
+- Gives specific dietary suggestions based on symptoms and phase
+- Be encouraging and actionable
+
+Return as plain text.
+          `;
+
+          const personalizedResponse = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: personalizedPrompt,
+            config: {
+              systemInstruction: "Be empathetic, scientific, and personalized. Focus on actionable advice."
+            }
+          });
+
+          setPersonalizedAdvice(personalizedResponse.text || 'Unable to generate personalized advice.');
+        } else {
+          setPersonalizedAdvice('Add logs to see personalized insights.');
+        }
       } catch (error) {
-        console.error("Error fetching education content:", error);
+        console.error("Error fetching content:", error);
+        setPersonalizedAdvice('Error generating personalized advice.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchEducation();
-  }, [insights]);
+  }, [insights, dailyLogs]);
 
   return (
     <div className="flex flex-col min-h-full">
@@ -203,6 +242,17 @@ Return as JSON with keys: hormoneExplanation, phaseScience, nutritionDeepDive, e
                 <h3 className="font-bold text-lg text-gray-800">Lifestyle Optimization</h3>
               </div>
               <p className="text-gray-700 leading-relaxed">{educationContent.lifestyleTips}</p>
+            </div>
+
+            {/* Personalized Insights */}
+            <div className="bg-gradient-to-br from-purple-50 to-white rounded-[2.5rem] p-6 shadow-lg border border-purple-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="text-xl">💡</span>
+                </div>
+                <h3 className="font-bold text-lg text-gray-800">Personalized Insights from Your Logs</h3>
+              </div>
+              <p className="text-gray-700 leading-relaxed">{personalizedAdvice}</p>
             </div>
           </div>
         )}
