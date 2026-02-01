@@ -107,10 +107,7 @@ const Dashboard: React.FC<Props> = ({ user, insights, loading }) => {
       <header className="px-6 py-8 flex justify-between items-center bg-white sticky top-0 z-10 border-b border-pink-50">
         <Logo size={20} />
         <div className="flex gap-4">
-          <button className="p-3 bg-white border border-pink-100 rounded-2xl shadow-sm text-gray-400 relative">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#FF2D55] border-2 border-white rounded-full"></span>
-          </button>
+         
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF2D55] to-pink-400 flex items-center justify-center font-bold text-white shadow-lg shadow-pink-100 uppercase">
             {user.email[0]}
           </div>

@@ -47,9 +47,7 @@ const ProfileView: React.FC<Props> = ({ user, onUpdate, onLogout }) => {
       <header className="px-6 py-8 flex justify-between items-center bg-white sticky top-0 z-10">
         <Logo size={20} />
         <div className="flex gap-4">
-          <button className="p-3 bg-white border border-pink-100 rounded-2xl shadow-sm text-gray-400">
-            <Bell size={20} />
-          </button>
+         
           <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-[#FFDDE2] bg-[#FFDDE2] flex items-center justify-center font-bold text-[#FF2D55]">
             {user.email[0].toUpperCase()}
           </div>
