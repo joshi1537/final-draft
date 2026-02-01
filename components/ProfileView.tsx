@@ -1,81 +1,306 @@
-
-import React from 'react';
-import { User, Settings, Shield, Bell, Heart, ArrowRight, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, ChevronRight, LogOut, User, Calendar, Heart, Apple, AlertCircle, Save } from 'lucide-react';
 import { UserProfile } from '../types';
-import { Logo } from '../constants';
+import { Logo, DIETARY_OPTIONS } from '../constants';
 
 interface Props {
   user: UserProfile;
-  onUpdate: (u: UserProfile) => void;
+  onUpdate: (user: UserProfile) => void;
+  onLogout: () => void;
 }
 
-const ProfileView: React.FC<Props> = ({ user, onUpdate }) => {
-  const sections = [
-    { icon: <Heart size={20} />, label: 'Health Conditions', value: `${user.hasPCOS ? 'PCOS' : ''} ${user.hasEndometriosis ? 'Endometriosis' : ''}`.trim() || 'None' },
-    { icon: <Settings size={20} />, label: 'Cycle Goal', value: 'Syncing' },
-    { icon: <Bell size={20} />, label: 'Notifications', value: 'Daily Reminder' },
-    { icon: <Shield size={20} />, label: 'Privacy', value: 'Locked' },
-  ];
+const ProfileView: React.FC<Props> = ({ user, onUpdate, onLogout }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedUser, setEditedUser] = useState<UserProfile>({ ...user });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleSave = () => {
+    onUpdate(editedUser);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedUser({ ...user });
+    setIsEditing(false);
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    onLogout();
+  };
+
+  const toggleDietaryRestriction = (restriction: string) => {
+    const current = editedUser.dietaryRestrictions || [];
+    const updated = current.includes(restriction)
+      ? current.filter(r => r !== restriction)
+      : [...current, restriction];
+    setEditedUser({ ...editedUser, dietaryRestrictions: updated });
+  };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#FFF5F6]">
-      <header className="px-6 py-8 flex justify-between items-center bg-white border-b border-pink-50">
+    <div className="flex flex-col min-h-full">
+      {/* Header */}
+      <header className="px-6 py-8 flex justify-between items-center bg-white sticky top-0 z-10">
         <Logo size={20} />
-        <button className="text-[#FF2D55] font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-          Logout <LogOut size={14} />
-        </button>
+        <div className="flex gap-4">
+          <button className="p-3 bg-white border border-pink-100 rounded-2xl shadow-sm text-gray-400">
+            <Bell size={20} />
+          </button>
+          <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-[#FFDDE2] bg-[#FFDDE2] flex items-center justify-center font-bold text-[#FF2D55]">
+            {user.email[0].toUpperCase()}
+          </div>
+        </div>
       </header>
 
-      <div className="p-6 space-y-8 pb-32">
-        {/* User Header */}
-        <div className="flex flex-col items-center text-center mt-4">
-          <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-[#FF2D55] to-pink-300 p-1 mb-4 shadow-xl shadow-pink-100">
-            <div className="w-full h-full bg-white rounded-[2.3rem] flex items-center justify-center text-4xl font-serif italic text-[#FF2D55] font-bold">
-              {user.email[0].toUpperCase()}
-            </div>
+      <div className="p-6 pb-32">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-4xl font-serif italic text-[#FF2D55] mb-2">Profile</h1>
+            <p className="text-gray-500">Manage your account</p>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">{user.email.split('@')[0]}</h2>
-          <p className="text-gray-400 font-medium">Aura Member since Jan 2026</p>
+          {!isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-6 py-3 bg-[#FF2D55] text-white rounded-2xl font-bold hover:bg-[#E02549] transition-colors shadow-md"
+            >
+              Edit
+            </button>
+          )}
         </div>
 
-        {/* Health Profile Card */}
-        <section className="bg-white rounded-[3rem] p-8 shadow-sm border border-pink-50">
-          <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">Personal Wellness</h3>
-          <div className="space-y-6">
-            {sections.map((s, i) => (
-              <div key={i} className="flex items-center justify-between group cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#FFF5F6] rounded-2xl text-[#FF2D55] group-hover:bg-[#FF2D55] group-hover:text-white transition-all">
-                    {s.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-800">{s.label}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{s.value}</p>
-                  </div>
-                </div>
-                <ArrowRight size={16} className="text-gray-200 group-hover:text-[#FF2D55] transition-colors" />
-              </div>
-            ))}
+        {/* Profile Info */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-pink-50 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <User size={18} className="text-[#FF2D55]" />
+            <h3 className="font-bold text-gray-700 text-lg">Account Info</h3>
           </div>
-        </section>
 
-        {/* Dietary Prefs */}
-        <section className="bg-white rounded-[3rem] p-8 shadow-sm border border-pink-50">
-           <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Dietary Restrictions</h3>
-           <div className="flex flex-wrap gap-2">
-             {user.dietaryRestrictions.map(d => (
-               <span key={d} className="px-4 py-2 bg-[#FFF5F6] text-[#FF2D55] text-[10px] font-bold rounded-full border border-pink-100 uppercase tracking-widest">
-                 {d}
-               </span>
-             ))}
-             {user.dietaryRestrictions.length === 0 && <span className="text-sm font-medium text-gray-300">No restrictions added.</span>}
-           </div>
-        </section>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Email</label>
+              <p className="text-gray-700 font-medium">{user.email}</p>
+            </div>
+          </div>
+        </div>
 
-        <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mt-10">
-          Syncing with your biology since 2026
-        </p>
+        {/* Cycle Info */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-pink-50 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Calendar size={18} className="text-[#FF2D55]" />
+            <h3 className="font-bold text-gray-700 text-lg">Cycle Information</h3>
+          </div>
+
+          <div className="space-y-5">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Last Period Date</label>
+              {isEditing ? (
+                <input
+                  type="date"
+                  value={editedUser.lastPeriodDate}
+                  onChange={(e) => setEditedUser({ ...editedUser, lastPeriodDate: e.target.value })}
+                  className="w-full px-4 py-3 bg-pink-50 rounded-2xl border-2 border-transparent focus:border-pink-200 focus:outline-none text-gray-700"
+                />
+              ) : (
+                <p className="text-gray-700 font-medium">
+                  {new Date(user.lastPeriodDate).toLocaleDateString('default', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Cycle Length (days)</label>
+              {isEditing ? (
+                <input
+                  type="number"
+                  min="21"
+                  max="40"
+                  value={editedUser.cycleLength}
+                  onChange={(e) => setEditedUser({ ...editedUser, cycleLength: parseInt(e.target.value) || 28 })}
+                  className="w-full px-4 py-3 bg-pink-50 rounded-2xl border-2 border-transparent focus:border-pink-200 focus:outline-none text-gray-700"
+                />
+              ) : (
+                <p className="text-gray-700 font-medium">{user.cycleLength} days</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Period Duration (days)</label>
+              {isEditing ? (
+                <input
+                  type="number"
+                  min="2"
+                  max="10"
+                  value={editedUser.periodDuration}
+                  onChange={(e) => setEditedUser({ ...editedUser, periodDuration: parseInt(e.target.value) || 5 })}
+                  className="w-full px-4 py-3 bg-pink-50 rounded-2xl border-2 border-transparent focus:border-pink-200 focus:outline-none text-gray-700"
+                />
+              ) : (
+                <p className="text-gray-700 font-medium">{user.periodDuration} days</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Health Conditions */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-pink-50 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Heart size={18} className="text-[#FF2D55]" />
+            <h3 className="font-bold text-gray-700 text-lg">Health Conditions</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">PCOS</span>
+              {isEditing ? (
+                <button
+                  onClick={() => setEditedUser({ ...editedUser, hasPCOS: !editedUser.hasPCOS })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    editedUser.hasPCOS ? 'bg-[#FF2D55]' : 'bg-gray-200'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+                    editedUser.hasPCOS ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              ) : (
+                <span className={`font-bold ${user.hasPCOS ? 'text-[#FF2D55]' : 'text-gray-400'}`}>
+                  {user.hasPCOS ? 'Yes' : 'No'}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Endometriosis</span>
+              {isEditing ? (
+                <button
+                  onClick={() => setEditedUser({ ...editedUser, hasEndometriosis: !editedUser.hasEndometriosis })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    editedUser.hasEndometriosis ? 'bg-[#FF2D55]' : 'bg-gray-200'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+                    editedUser.hasEndometriosis ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              ) : (
+                <span className={`font-bold ${user.hasEndometriosis ? 'text-[#FF2D55]' : 'text-gray-400'}`}>
+                  {user.hasEndometriosis ? 'Yes' : 'No'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Dietary Preferences */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-pink-50 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Apple size={18} className="text-[#FF2D55]" />
+            <h3 className="font-bold text-gray-700 text-lg">Dietary Preferences</h3>
+          </div>
+
+          {isEditing ? (
+            <div className="flex flex-wrap gap-3">
+              {DIETARY_OPTIONS.filter(opt => opt !== 'None').map(option => {
+                const isSelected = (editedUser.dietaryRestrictions || []).includes(option);
+                return (
+                  <button
+                    key={option}
+                    onClick={() => toggleDietaryRestriction(option)}
+                    className={`px-5 py-3 rounded-2xl font-medium text-sm transition-all ${
+                      isSelected
+                        ? 'bg-[#FF2D55] text-white shadow-md'
+                        : 'bg-pink-50 text-gray-600 hover:bg-pink-100'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {user.dietaryRestrictions && user.dietaryRestrictions.length > 0 ? (
+                user.dietaryRestrictions.map(restriction => (
+                  <div key={restriction} className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF2D55] rounded-full"></div>
+                    <span className="text-gray-700">{restriction}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">No dietary restrictions</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Edit Mode Actions */}
+        {isEditing && (
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={handleSave}
+              className="flex-1 bg-[#FF2D55] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#E02549] transition-colors shadow-lg"
+            >
+              <Save size={20} />
+              Save Changes
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex-1 bg-gray-100 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogoutClick}
+          className="w-full bg-white border-2 border-pink-100 text-gray-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:border-[#FF2D55] hover:text-[#FF2D55] transition-colors"
+        >
+          <LogOut size={20} />
+          Sign Out
+        </button>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl">
+            <div className="flex items-center justify-center w-16 h-16 bg-pink-50 rounded-full mx-auto mb-4">
+              <AlertCircle size={32} className="text-[#FF2D55]" />
+            </div>
+            <h3 className="text-2xl font-serif italic text-[#FF2D55] text-center mb-2">
+              Sign Out?
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to sign out? Your data will be saved.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={confirmLogout}
+                className="flex-1 bg-[#FF2D55] text-white py-4 rounded-2xl font-bold hover:bg-[#E02549] transition-colors"
+              >
+                Yes, Sign Out
+              </button>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 bg-gray-100 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

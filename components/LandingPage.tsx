@@ -11,7 +11,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
     <div className="flex flex-col min-h-full">
       <header className="p-6 flex justify-between items-center">
         <Logo />
-        <button className="text-sm font-semibold text-[#1A1A1A]">Sign In</button>
       </header>
 
       <div className="px-8 mt-12 flex flex-col gap-6">
@@ -41,14 +40,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
       <div className="mt-12 px-8 relative overflow-hidden">
         <div className="w-full aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl relative">
           <img 
-            src="https://picsum.photos/seed/aura-health/800/1000" 
+            src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=1200&fit=crop"
             alt="Wellness" 
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-8 right-8 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/50 animate-bounce">
-            <p className="text-[10px] uppercase font-bold text-[#FF2D55] tracking-wider mb-1">Daily Tip</p>
-            <p className="text-sm font-bold text-[#1A1A1A]">Eat Guavas today ✨</p>
-          </div>
         </div>
       </div>
     </div>

@@ -1,90 +1,133 @@
-
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, Mail, Lock } from 'lucide-react';
+import { Logo } from '../constants';
 
-interface SignInProps {
+interface Props {
   onSignIn: (email: string) => void;
   onBack: () => void;
 }
 
-const SignIn: React.FC<SignInProps> = ({ onSignIn, onBack }) => {
+const SignIn: React.FC<Props> = ({ onSignIn, onBack }) => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate email
+    if (!email.trim()) {
+      setError('Please enter your email');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // For now, we're not validating password since this is a demo
+    // In production, you'd validate password and authenticate with a backend
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    // Success - proceed to onboarding
+    onSignIn(email.toLowerCase().trim());
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <div className="bg-[#FF2D55] p-10 flex flex-col justify-between h-[45vh] relative rounded-b-[4rem] shadow-2xl">
-        <button onClick={onBack} className="text-white flex items-center gap-2 font-medium opacity-80 hover:opacity-100 transition-opacity">
-          <ArrowLeft size={18} /> Back to Home
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF5F6] to-white flex flex-col">
+      {/* Back Button */}
+      <div className="p-6">
+        <button 
+          onClick={onBack}
+          className="p-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-2 text-gray-600"
+        >
+          <ChevronLeft size={20} />
+          <span className="font-medium">Back</span>
         </button>
-        
-        <div className="mb-8">
-          <h2 className="text-5xl font-serif text-white mb-4">Start your journey to hormone harmony.</h2>
-          <p className="text-white/80 text-lg leading-relaxed max-w-xs">
-            Join thousands of women who have unlocked their best selves through cycle syncing.
-          </p>
-        </div>
-
-        <div className="absolute -bottom-8 left-10 right-10">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-3xl flex items-center gap-4">
-            <div className="bg-white p-2.5 rounded-2xl">
-              <ShieldCheck className="text-[#FF2D55]" size={24} />
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm">100% Private</p>
-              <p className="text-white/60 text-xs">Your health data is encrypted and never shared.</p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div className="flex-1 p-10 pt-16 flex flex-col">
-        <h3 className="text-3xl font-bold mb-1">Welcome back</h3>
-        <p className="text-[#FF2D55] font-medium mb-10">We've missed you! Enter your details below.</p>
+      {/* Content */}
+      <div className="flex-1 flex flex-col justify-center px-8 pb-12">
+        <div className="mb-8">
+          <Logo size={32} className="mb-6" />
+          <h1 className="text-4xl font-serif italic text-[#FF2D55] mb-3">Create Account</h1>
+          <p className="text-gray-500">Sign in to continue your hormone harmony journey</p>
+        </div>
 
-        <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); onSignIn(email); }}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email Input */}
           <div>
-            <label className="block text-[#1A1A1A] text-sm font-bold mb-2">Email Address</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-200" size={20} />
-              <input 
-                type="email" 
-                required
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full bg-[#FFF5F6] border-none rounded-2xl py-4 pl-12 pr-4 text-[#1A1A1A] placeholder:text-pink-200 focus:ring-2 focus:ring-[#FF2D55] transition-all"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                placeholder="your.email@example.com"
+                className="w-full pl-12 pr-4 py-4 bg-white border-2 border-pink-100 rounded-2xl focus:border-[#FF2D55] focus:outline-none text-gray-700 placeholder-gray-300"
               />
             </div>
           </div>
 
+          {/* Password Input */}
           <div>
-            <label className="block text-[#1A1A1A] text-sm font-bold mb-2">Password</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-200" size={20} />
-              <input 
-                type="password" 
-                required
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                }}
                 placeholder="••••••••"
-                className="w-full bg-[#FFF5F6] border-none rounded-2xl py-4 pl-12 pr-4 text-[#1A1A1A] placeholder:text-pink-200 focus:ring-2 focus:ring-[#FF2D55] transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-white border-2 border-pink-100 rounded-2xl focus:border-[#FF2D55] focus:outline-none text-gray-700 placeholder-gray-300"
               />
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button type="button" className="text-[#FF2D55] text-sm font-bold">Forgot password?</button>
-          </div>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-sm">
+              {error}
+            </div>
+          )}
 
-          <button 
+          {/* Sign In Button */}
+          <button
             type="submit"
-            className="w-full bg-[#FF2D55] text-white rounded-3xl py-5 font-bold flex items-center justify-center gap-2 shadow-xl shadow-pink-100 hover:scale-[1.01] transition-transform"
+            className="w-full bg-[#FF2D55] text-white py-5 rounded-2xl font-bold text-lg hover:bg-[#E02549] transition-colors shadow-lg shadow-pink-200"
           >
-            Sign In <ArrowRight size={20} />
+            Sign In
           </button>
         </form>
 
-        <p className="text-center mt-12 text-sm text-gray-400 font-medium">
-          Don't have an account? <span className="text-[#FF2D55] font-bold cursor-pointer">Sign up</span>
-        </p>
+        {/* Demo Note */}
+        <div className="mt-8 p-4 bg-pink-50 rounded-2xl border border-pink-100">
+          <p className="text-xs text-gray-600 text-center">
+            <span className="font-bold text-[#FF2D55]">Important:</span> Any email and password (6+ chars) is required
+          </p>
+        </div>
       </div>
     </div>
   );
