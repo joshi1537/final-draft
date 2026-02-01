@@ -12,6 +12,9 @@ import ProfileView from './components/ProfileView';
 import CheckInModal from './components/CheckInModal';
 import BottomNav from './components/BottomNav';
 import { GoogleGenAI, Type } from "@google/genai";
+import { supabase } from './src/lib/supabase';
+import EducationView from './components/EducationView';  // ← ADD THIS LINE
+
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LANDING);
@@ -114,39 +117,247 @@ const App: React.FC = () => {
     if (user) fetchInsights(user);
   }, [user]);
 
-  const handleSaveCheckIn = (log: DailyLog) => {
-    setDailyLogs(prev => [log, ...prev]);
-    setIsCheckInOpen(false);
-    if (user) fetchInsights(user);
+  // Load daily logs from Supabase when user signs in
+useEffect(() => {
+  const loadDailyLogs = async () => {
+    if (!user) return;
+    
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) return;
+    
+    const { data: logs } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', authData.user.id)
+      .order('date', { ascending: false });
+    
+    if (logs) {
+      const formattedLogs: DailyLog[] = logs.map(log => ({
+        date: log.date,
+        hasPeriod: log.has_period,
+        symptoms: log.symptoms || [],
+        nutritionNote: log.nutrition_note || ''
+      }));
+      setDailyLogs(formattedLogs);
+    }
+  };
+  
+  loadDailyLogs();
+}, [user]);
+
+  const handleSaveCheckIn = async (log: DailyLog) => {
+  // Save to local state
+  setDailyLogs(prev => [log, ...prev]);
+  setIsCheckInOpen(false);
+  
+  // Save to Supabase
+  const { data: authData } = await supabase.auth.getUser();
+  if (authData?.user) {
+    await supabase
+      .from('daily_logs')
+      .upsert({
+        user_id: authData.user.id,
+        date: log.date,
+        has_period: log.hasPeriod,
+        symptoms: log.symptoms,
+        nutrition_note: log.nutritionNote
+      }, {
+        onConflict: 'user_id,date'
+      });
+  }
+  
+  if (user) fetchInsights(user);
+};
+
+  const handleLogPeriod = async (dateStr: string) => {
+  const existingLogIndex = dailyLogs.findIndex(log => log.date === dateStr);
+  
+  if (existingLogIndex >= 0) {
+    const updatedLogs = [...dailyLogs];
+    updatedLogs[existingLogIndex] = {
+      ...updatedLogs[existingLogIndex],
+      hasPeriod: true
+    };
+    setDailyLogs(updatedLogs);
+  } else {
+    const newLog: DailyLog = {
+      date: dateStr,
+      hasPeriod: true,
+      symptoms: [],
+      nutritionNote: ''
+    };
+    setDailyLogs(prev => [newLog, ...prev]);
+  }
+  
+  // Save to Supabase
+  const { data: authData } = await supabase.auth.getUser();
+  if (authData?.user) {
+    await supabase
+      .from('daily_logs')
+      .upsert({
+        user_id: authData.user.id,
+        date: dateStr,
+        has_period: true,
+        symptoms: [],
+        nutrition_note: ''
+      }, {
+        onConflict: 'user_id,date'
+      });
+  }
+  
+  if (user) fetchInsights(user);
+};
+
+  const handleLogout = () => {
+    setUser(null);
+    setDailyLogs([]);
+    setInsights(null);
+    setTempUser({
+      cycleLength: 28,
+      periodDuration: 5,
+      dietaryRestrictions: [],
+    });
+    setView(AppView.LANDING);
   };
 
   const renderView = () => {
     switch (view) {
-      case AppView.LANDING: return <LandingPage onStart={() => setView(AppView.SIGN_IN)} />;
-      case AppView.SIGN_IN: return <SignIn onSignIn={(email) => { setTempUser(p => ({...p, email})); setView(AppView.ONBOARDING_CYCLE); }} onBack={() => setView(AppView.LANDING)} />;
-      case AppView.ONBOARDING_CYCLE: return <OnboardingCycle onNext={(d) => { setTempUser(p => ({...p, ...d})); setView(AppView.ONBOARDING_HEALTH); }} />;
-      case AppView.ONBOARDING_HEALTH: return <OnboardingHealth onNext={(d) => { setTempUser(p => ({...p, ...d})); setView(AppView.ONBOARDING_DIET); }} />;
-      case AppView.ONBOARDING_DIET: return <OnboardingDiet onNext={(d) => { const u = {...tempUser, dietaryRestrictions: d} as UserProfile; setUser(u); setView(AppView.DASHBOARD); }} />;
-      case AppView.DASHBOARD: return <Dashboard user={user!} insights={insights} loading={loadingInsights} />;
-      case AppView.PLAN: return <PlanView user={user!} logs={dailyLogs} />;
-      case AppView.STATS: return <StatsView logs={dailyLogs} />;
-      case AppView.PROFILE: return <ProfileView user={user!} onUpdate={setUser} />;
-      default: return <Dashboard user={user!} insights={insights} loading={loadingInsights} />;
+      case AppView.LANDING:
+        return <LandingPage onStart={() => setView(AppView.SIGN_IN)} />;
+      
+      case AppView.SIGN_IN:
+        return (
+          <SignIn
+            onSignIn={async (email) => {
+              // Check if user has existing profile in Supabase
+              const { data: authData } = await supabase.auth.getUser();
+              
+              if (authData?.user) {
+                // Try to load existing profile
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', authData.user.id)
+                  .single();
+                
+                if (profile && profile.cycle_length && profile.last_period_date) {
+                  // User has completed onboarding before - load their data and go to dashboard
+                  const loadedUser: UserProfile = {
+                    email: profile.email,
+                    cycleLength: profile.cycle_length,
+                    periodDuration: profile.period_duration,
+                    lastPeriodDate: profile.last_period_date,
+                    hasPCOS: profile.has_pcos,
+                    hasEndometriosis: profile.has_endometriosis,
+                    dietaryRestrictions: profile.dietary_restrictions || []
+                  };
+                  
+                  setUser(loadedUser);
+                  setView(AppView.DASHBOARD);
+                  return;
+                }
+              }
+              
+              // New user or profile incomplete - start onboarding
+              setTempUser(p => ({ ...p, email }));
+              setView(AppView.ONBOARDING_CYCLE);
+            }}
+            onBack={() => setView(AppView.LANDING)}
+          />
+        );
+      
+      case AppView.ONBOARDING_CYCLE:
+        return (
+          <OnboardingCycle
+            onNext={(d) => {
+              setTempUser(p => ({ ...p, ...d }));
+              setView(AppView.ONBOARDING_HEALTH);
+            }}
+          />
+        );
+      
+      case AppView.ONBOARDING_HEALTH:
+        return (
+          <OnboardingHealth
+            onNext={(d) => {
+              setTempUser(p => ({ ...p, ...d }));
+              setView(AppView.ONBOARDING_DIET);
+            }}
+          />
+        );
+      
+      case AppView.ONBOARDING_DIET:
+        return (
+          <OnboardingDiet
+            onNext={async (d) => {
+              const completeUser = { ...tempUser, dietaryRestrictions: d } as UserProfile;
+              
+              // Get the current Supabase user ID
+              const { data: authData } = await supabase.auth.getUser();
+              
+              if (authData?.user) {
+                // Update the profile in Supabase with onboarding data
+                await supabase
+                  .from('profiles')
+                  .update({
+                    cycle_length: completeUser.cycleLength,
+                    period_duration: completeUser.periodDuration,
+                    last_period_date: completeUser.lastPeriodDate,
+                    has_pcos: completeUser.hasPCOS,
+                    has_endometriosis: completeUser.hasEndometriosis,
+                    dietary_restrictions: completeUser.dietaryRestrictions
+                  })
+                  .eq('id', authData.user.id);
+              }
+              
+              setUser(completeUser);
+              setView(AppView.DASHBOARD);
+            }}
+          />
+        );
+      
+      case AppView.DASHBOARD:
+        return <Dashboard user={user!} insights={insights} loading={loadingInsights} />;
+      
+      case AppView.PLAN:
+        return <PlanView user={user!} logs={dailyLogs} onLogPeriod={handleLogPeriod} />;
+      
+      case AppView.STATS:
+        return <StatsView logs={dailyLogs} user={user!} />;
+
+        case AppView.EDUCATION:  // ← ADD THESE 2 LINES
+  return <EducationView user={user!} insights={insights} />;
+      
+      case AppView.PROFILE:
+        return <ProfileView user={user!} onUpdate={setUser} onLogout={handleLogout} />;
+      
+      default:
+        return <Dashboard user={user!} insights={insights} loading={loadingInsights} />;
     }
   };
 
-  const showNav = [AppView.DASHBOARD, AppView.PLAN, AppView.STATS, AppView.PROFILE].includes(view);
+const showNav = [AppView.DASHBOARD, AppView.PLAN, AppView.STATS, AppView.EDUCATION, AppView.PROFILE].includes(view);
 
   return (
     <div className="min-h-screen relative max-w-md mx-auto bg-[#FFF5F6] shadow-2xl overflow-hidden flex flex-col">
       <main className="flex-1 overflow-y-auto pb-24">
         {renderView()}
       </main>
-      {showNav && <BottomNav activeView={view} setView={setView} onPlusClick={() => setIsCheckInOpen(true)} />}
-      {isCheckInOpen && <CheckInModal onClose={() => setIsCheckInOpen(false)} onSave={handleSaveCheckIn} />}
+      {showNav && (
+        <BottomNav
+          activeView={view}
+          setView={setView}
+          onPlusClick={() => setIsCheckInOpen(true)}
+        />
+      )}
+      {isCheckInOpen && (
+        <CheckInModal
+          onClose={() => setIsCheckInOpen(false)}
+          onSave={handleSaveCheckIn}
+        />
+      )}
     </div>
   );
 };
 
 export default App;
-

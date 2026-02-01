@@ -1,4 +1,3 @@
-
 export enum AppView {
   LANDING = 'LANDING',
   SIGN_IN = 'SIGN_IN',
@@ -8,6 +7,7 @@ export enum AppView {
   DASHBOARD = 'DASHBOARD',
   PLAN = 'PLAN',
   STATS = 'STATS',
+  EDUCATION = 'EDUCATION',  // ← ADD THIS LINE
   PROFILE = 'PROFILE'
 }
 

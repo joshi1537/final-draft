@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Home, Calendar, BarChart3, User, Plus } from 'lucide-react';
+import { Home, Calendar, BarChart3, User, Plus, BookOpen } from 'lucide-react';
 import { AppView } from '../types';
 
 interface Props {
@@ -49,30 +48,39 @@ const BottomNav: React.FC<Props> = ({ activeView, setView, onPlusClick }) => {
 
         {/* Navigation Items (Right) */}
         <div className="flex flex-1 justify-around">
+           <button 
+             onClick={() => setView(AppView.STATS)}
+             className={`flex flex-col items-center gap-1 transition-all ${activeView === AppView.STATS ? 'text-[#FF2D55]' : 'text-gray-300'}`}
+           >
+             <div className={`p-1 rounded-lg ${activeView === AppView.STATS ? 'bg-pink-50' : ''}`}>
+               <BarChart3 size={22} />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Stats</span>
+           </button>
+           
           <button 
-            onClick={() => setView(AppView.STATS)}
-            className={`flex flex-col items-center gap-1 transition-all ${activeView === AppView.STATS ? 'text-[#FF2D55]' : 'text-gray-300'}`}
+            onClick={() => setView(AppView.EDUCATION)}
+            className={`flex flex-col items-center gap-1 transition-all ${activeView === AppView.EDUCATION ? 'text-[#FF2D55]' : 'text-gray-300'}`}
           >
-            <div className={`p-1 rounded-lg ${activeView === AppView.STATS ? 'bg-pink-50' : ''}`}>
-              <BarChart3 size={22} />
+            <div className={`p-1 rounded-lg ${activeView === AppView.EDUCATION ? 'bg-pink-50' : ''}`}>
+              <BookOpen size={22} />
             </div>
-            <span className="text-[9px] font-black uppercase tracking-widest">Stats</span>
+            <span className="text-[9px] font-black uppercase tracking-widest">Learn</span>
           </button>
           
-          <button 
-            onClick={() => setView(AppView.PROFILE)}
-            className={`flex flex-col items-center gap-1 transition-all ${activeView === AppView.PROFILE ? 'text-[#FF2D55]' : 'text-gray-300'}`}
-          >
-            <div className={`p-1 rounded-lg ${activeView === AppView.PROFILE ? 'bg-pink-50' : ''}`}>
-              <User size={22} />
-            </div>
-            <span className="text-[9px] font-black uppercase tracking-widest">Profile</span>
-          </button>
-        </div>
+           <button 
+             onClick={() => setView(AppView.PROFILE)}
+             className={`flex flex-col items-center gap-1 transition-all ${activeView === AppView.PROFILE ? 'text-[#FF2D55]' : 'text-gray-300'}`}
+           >
+             <div className={`p-1 rounded-lg ${activeView === AppView.PROFILE ? 'bg-pink-50' : ''}`}>
+               <User size={22} />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Profile</span>
+           </button>
+         </div>
+       </div>
+     </div>
+   );
+ };
 
-      </div>
-    </div>
-  );
-};
-
-export default BottomNav;
+ export default BottomNav;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, ChevronRight, LogOut, User, Calendar, Heart, Apple, AlertCircle, Save } from 'lucide-react';
 import { UserProfile } from '../types';
 import { Logo, DIETARY_OPTIONS } from '../constants';
+import { supabase } from '../src/lib/supabase';
 
 interface Props {
   user: UserProfile;
@@ -13,6 +14,10 @@ const ProfileView: React.FC<Props> = ({ user, onUpdate, onLogout }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserProfile>({ ...user });
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // added sign-out state
+  const [signOutLoading, setSignOutLoading] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const handleSave = () => {
     onUpdate(editedUser);
@@ -28,9 +33,27 @@ const ProfileView: React.FC<Props> = ({ user, onUpdate, onLogout }) => {
     setShowLogoutConfirm(true);
   };
 
-  const confirmLogout = () => {
-    setShowLogoutConfirm(false);
-    onLogout();
+  const confirmLogout = async () => {
+    setSignOutError(null);
+    setSignOutLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      setSignOutLoading(false);
+      if (error) {
+        setSignOutError(error.message);
+        return;
+      }
+      setShowLogoutConfirm(false);
+      // notify parent; fallback to reload if parent doesn't handle UI state
+      if (typeof onLogout === 'function') {
+        onLogout();
+      } else {
+        window.location.reload();
+      }
+    } catch (err: any) {
+      setSignOutLoading(false);
+      setSignOutError(err?.message ?? 'Failed to sign out.');
+    }
   };
 
   const toggleDietaryRestriction = (restriction: string) => {
@@ -286,16 +309,24 @@ const ProfileView: React.FC<Props> = ({ user, onUpdate, onLogout }) => {
               <button
                 onClick={confirmLogout}
                 className="flex-1 bg-[#FF2D55] text-white py-4 rounded-2xl font-bold hover:bg-[#E02549] transition-colors"
+                disabled={signOutLoading}
               >
-                Yes, Sign Out
+                {signOutLoading ? 'Signing out…' : 'Yes, Sign Out'}
               </button>
               <button
                 onClick={() => setShowLogoutConfirm(false)}
                 className="flex-1 bg-gray-100 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
+                disabled={signOutLoading}
               >
                 Cancel
               </button>
             </div>
+
+            {signOutError && (
+              <div className="mt-4 text-sm text-red-600 text-center">
+                {signOutError}
+              </div>
+            )}
           </div>
         </div>
       )}

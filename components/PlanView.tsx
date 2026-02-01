@@ -190,7 +190,7 @@ const PlanView: React.FC<Props> = ({ user, logs }) => {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-4 h-4 rounded-full bg-[#FFF5F6] border border-pink-100"></div>
-                <span className="text-sm font-medium text-gray-500">Predicted Period days</span>
+                <span className="text-sm font-medium text-gray-500">Period days</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="w-4 h-4 rounded-full bg-pink-50"></div>

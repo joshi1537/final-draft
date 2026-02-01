@@ -32,7 +32,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             onClick={onStart}
             className="px-10 py-5 bg-[#FF2D55] text-white rounded-full font-bold shadow-xl shadow-pink-200 hover:scale-[1.02] transition-transform"
           >
-            Start Today
+            Start Today or Log-in
           </button>
         </div>
       </div>
